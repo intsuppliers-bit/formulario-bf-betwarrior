@@ -1219,42 +1219,48 @@ let drawing = false, hasSig = false;
 
 function initCanvas() {
   const wrap = document.getElementById('sigWrap');
-  const rect = wrap.getBoundingClientRect();
-  const w = rect.width || 600;
-  const h = 160;
+  const w = Math.max(wrap.offsetWidth, 300);
   canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
+  canvas.style.height = '160px';
   canvas.width = w * window.devicePixelRatio;
-  canvas.height = h * window.devicePixelRatio;
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  canvas.height = 160 * window.devicePixelRatio;
+  ctx.setTransform(1,0,0,1,0,0);
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
   ctx.strokeStyle = '#1A1A1A';
   ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 }
-window.addEventListener('load', () => { setTimeout(initCanvas, 100); });
-window.addEventListener('resize', initCanvas);
+
+// Inicializar cuando el paso 6 es visible
+function maybeInitCanvas() {
+  const panel = document.getElementById('step-6');
+  if (panel && panel.classList.contains('active') && canvas.width === 0) {
+    setTimeout(initCanvas, 50);
+  }
+}
+window.addEventListener('load', () => setTimeout(initCanvas, 200));
+
+const origShowStep = window.showStep;
 
 function getPos(e) {
   const r = canvas.getBoundingClientRect();
   const src = e.touches ? e.touches[0] : e;
-  return {
-    x: (src.clientX - r.left) * (canvas.width / r.width / window.devicePixelRatio),
-    y: (src.clientY - r.top) * (canvas.height / r.height / window.devicePixelRatio)
-  };
+  const scaleX = canvas.width / window.devicePixelRatio / r.width;
+  const scaleY = canvas.height / window.devicePixelRatio / r.height;
+  return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
 }
 
-canvas.addEventListener('mousedown', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+canvas.addEventListener('mousedown', e => { e.preventDefault(); initCanvas(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
 canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; document.getElementById('sigPlaceholder').style.opacity = '0'; });
 canvas.addEventListener('mouseup', () => drawing = false);
 canvas.addEventListener('mouseleave', () => drawing = false);
-canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+canvas.addEventListener('touchstart', e => { e.preventDefault(); initCanvas(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
 canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; document.getElementById('sigPlaceholder').style.opacity = '0'; }, { passive: false });
 canvas.addEventListener('touchend', () => drawing = false);
 
 function clearSig() {
-  ctx.clearRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   hasSig = false;
   document.getElementById('sigPlaceholder').style.opacity = '1';
 }
@@ -1267,113 +1273,94 @@ async function submitForm() {
   btn.textContent = 'Enviando…';
   btn.disabled = true;
 
-  const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
   const pepChecked = document.querySelector('input[name="pep"]:checked');
   const sancChecked = document.querySelector('input[name="sanc"]:checked');
-  const fuentesChecked = [...document.querySelectorAll('#step-4 .check-opt input:checked')].map(c => c.nextElementSibling.textContent.trim()).join(' | ');
+  const fuentes = [...document.querySelectorAll('#step-4 .check-opt input:checked')].map(c => c.nextElementSibling.textContent.trim()).join(' | ');
   const ref = 'BW-AML-' + Date.now().toString(36).toUpperCase();
-  const sigData = canvas.toDataURL('image/png');
+  const fecha = new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const pepLabel = pepChecked ? ({no:'No es PEP', si:'Sí, actualmente', fue:'Fue PEP (cesó)'}[pepChecked.value] || pepChecked.value) : '';
+  const sancLabel = sancChecked ? (sancChecked.value === 'no' ? 'No' : 'Sí') : '';
 
-  const row = (label, value) => value ? `<tr><td style="padding:6px 12px 6px 0;color:#666;font-size:13px;white-space:nowrap;vertical-align:top">${label}</td><td style="padding:6px 0;font-size:14px;color:#111;font-weight:500">${value}</td></tr>` : '';
-  const section = (title, rows) => `<tr><td colspan="2" style="padding:18px 0 6px"><span style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#FF4500;font-weight:bold">${title}</span><hr style="border:none;border-top:1px solid #eee;margin:4px 0 0"></td></tr>${rows}`;
-
-  const htmlBody = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-  <div style="background:#0D0D0D;padding:20px 24px;border-bottom:3px solid #FF4500">
-    <p style="color:#fff;font-size:18px;font-weight:bold;margin:0">BetWarrior — AML/PLD</p>
-    <p style="color:#999;font-size:12px;margin:4px 0 0">Nueva declaración de Beneficiario Final</p>
-  </div>
-  <div style="background:#fff;padding:24px;border:1px solid #eee">
-    <p style="background:#fff8f5;border-left:4px solid #FF4500;padding:10px 14px;font-size:13px;color:#333;margin:0 0 20px">
-      <strong>Referencia:</strong> ${ref} &nbsp;·&nbsp; <strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
-    </p>
-    <table style="width:100%;border-collapse:collapse">
-      ${section('A · Persona Jurídica',
-        row('Razón social', val('razon_social')) +
-        row('CNPJ / Registro', val('cnpj')) +
-        row('País de constitución', val('pais_const')) +
-        row('Fecha de constitución', val('fecha_const')) +
-        row('Actividad (CNAE)', val('cnae')) +
-        row('Dirección registrada', val('direccion'))
-      )}
-      ${section('B · Naturaleza del Control',
-        row('Tipo de control', val('tipo_control')) +
-        row('% de participación', val('porcentaje') ? val('porcentaje') + '%' : '') +
-        row('Cadena de control', val('cadena_control'))
-      )}
-      ${section('C · Datos Personales del Beneficiario',
-        row('Nombre completo', val('nombre')) +
-        row('Nombre de nacimiento', val('nombre_nac')) +
-        row('Tipo de documento', val('tipo_doc')) +
-        row('N° de documento', val('num_doc')) +
-        row('Fecha de nacimiento', val('fecha_nac')) +
-        row('Fecha emisión doc.', val('fecha_emision')) +
-        row('Nacionalidad', val('nacionalidad')) +
-        row('País residencia fiscal', val('pais_fiscal')) +
-        row('NIF', val('nif')) +
-        row('Email', val('email')) +
-        row('Teléfono', val('telefono')) +
-        row('Tel. alternativo', val('tel_alt')) +
-        row('Domicilio', val('domicilio'))
-      )}
-      ${section('D · Exposición Política (PEP)',
-        row('Condición PEP', pepChecked ? ({no:'No es PEP', si:'Sí, actualmente', fue:'Fue PEP (cesó)'}[pepChecked.value] || pepChecked.value) : '') +
-        row('Cargo / función', val('pep_cargo')) +
-        row('Organismo', val('pep_organismo')) +
-        row('País del cargo', val('pep_pais')) +
-        row('Fecha de cese', val('pep_cese')) +
-        row('Vínculo', val('pep_vinculo'))
-      )}
-      ${section('E · Origen de Fondos',
-        row('Fuentes', fuentesChecked) +
-        row('Otro (detalle)', val('otro_fuente')) +
-        row('Descripción origen', val('desc_origen')) +
-        row('Patrimonio estimado', val('patrimonio'))
-      )}
-      ${section('F · Sanciones',
-        row('¿Figura en listas?', sancChecked ? (sancChecked.value === 'no' ? 'No' : 'Sí') : '') +
-        row('Detalle sanciones', val('sanc_detalle'))
-      )}
-    </table>
-    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee">
-      <p style="font-size:11px;color:#FF4500;text-transform:uppercase;letter-spacing:1px;font-weight:bold;margin:0 0 10px">G · Firma manuscrita digital</p>
-      <img src="${sigData}" style="border:1px solid #ddd;border-radius:4px;max-width:100%;background:#fff" alt="Firma">
-    </div>
-    <p style="margin-top:20px;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:12px">
-      Portaria SPA/MF N° 114.324 · Lei N° 9.613/1998 · Resolución COAF N° 40/2021
-    </p>
-  </div>
-</div>`;
+  // Firma: guardar como PNG descargable via link oculto + enviar base64 truncado como referencia
+  const sigBase64 = canvas.toDataURL('image/png');
 
   const formData = {
-    _subject: `[BetWarrior AML] Beneficiario Final — ${val('nombre') || 'Sin nombre'} | ${ref}`,
-    _replyto: val('email'),
-    mensaje: htmlBody,
-    referencia: ref,
-    nombre: val('nombre'),
-    empresa: val('razon_social'),
+    _subject: '[BetWarrior AML] Beneficiario Final — ' + (v('nombre') || 'Sin nombre') + ' | ' + ref,
+    _replyto: v('email'),
+    '__ REFERENCIA': ref,
+    '__ FECHA': fecha,
+    ' ': ' ',
+    'A — RAZÓN SOCIAL': v('razon_social'),
+    'A — CNPJ': v('cnpj'),
+    'A — PAÍS CONSTITUCIÓN': v('pais_const'),
+    'A — FECHA CONSTITUCIÓN': v('fecha_const'),
+    'A — ACTIVIDAD CNAE': v('cnae'),
+    'A — DIRECCIÓN': v('direccion'),
+    '  ': ' ',
+    'B — TIPO DE CONTROL': v('tipo_control'),
+    'B — % PARTICIPACIÓN': v('porcentaje') ? v('porcentaje') + '%' : '',
+    'B — CADENA DE CONTROL': v('cadena_control'),
+    '   ': ' ',
+    'C — NOMBRE COMPLETO': v('nombre'),
+    'C — NOMBRE NACIMIENTO': v('nombre_nac'),
+    'C — TIPO DOCUMENTO': v('tipo_doc'),
+    'C — N° DOCUMENTO': v('num_doc'),
+    'C — FECHA NACIMIENTO': v('fecha_nac'),
+    'C — NACIONALIDAD': v('nacionalidad'),
+    'C — PAÍS RESIDENCIA FISCAL': v('pais_fiscal'),
+    'C — NIF': v('nif'),
+    'C — EMAIL': v('email'),
+    'C — TELÉFONO': v('telefono'),
+    'C — DOMICILIO': v('domicilio'),
+    '    ': ' ',
+    'D — CONDICIÓN PEP': pepLabel,
+    'D — CARGO PEP': v('pep_cargo'),
+    'D — ORGANISMO PEP': v('pep_organismo'),
+    'D — PAÍS CARGO': v('pep_pais'),
+    'D — FECHA CESE PEP': v('pep_cese'),
+    '     ': ' ',
+    'E — FUENTES DE FONDOS': fuentes,
+    'E — DESCRIPCIÓN ORIGEN': v('desc_origen'),
+    'E — PATRIMONIO ESTIMADO': v('patrimonio'),
+    '      ': ' ',
+    'F — SANCIONES': sancLabel,
+    'F — DETALLE SANCIONES': v('sanc_detalle'),
+    '       ': ' ',
+    'G — FIRMA (base64 PNG)': sigBase64.substring(0, 200) + '... [imagen completa en el portal Formspree]',
+    'G — FIRMA COMPLETA': sigBase64,
   };
+
+  // Filtrar campos vacios
+  const cleanData = {};
+  for (const [k, val2] of Object.entries(formData)) {
+    if (val2 && val2.trim && val2.trim() !== '' || k.startsWith('__') || k.trim() === '') {
+      cleanData[k] = val2;
+    }
+  }
 
   try {
     const response = await fetch('https://formspree.io/f/xnjwleqy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(formData)
+      body: JSON.stringify(cleanData)
     });
 
     if (response.ok) {
       document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('successScreen').classList.add('active');
       document.querySelector('.progress-bar-wrap').style.display = 'none';
-      document.getElementById('refCode').textContent = `Referencia: ${ref}`;
+      document.getElementById('refCode').textContent = 'Referencia: ' + ref;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       const data = await response.json();
-      alert('Error al enviar el formulario. Por favor intentá de nuevo.\n' + (data.error || ''));
+      alert('Error al enviar. Intentá de nuevo.
+' + (data.error || ''));
       btn.textContent = 'Enviar formulario';
       btn.disabled = false;
     }
   } catch (err) {
-    alert('No se pudo conectar con el servidor. Verificá tu conexión e intentá de nuevo.');
+    alert('No se pudo conectar. Verificá tu conexión e intentá de nuevo.');
     btn.textContent = 'Enviar formulario';
     btn.disabled = false;
   }
