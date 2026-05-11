@@ -706,6 +706,13 @@ body {
       </div>
     </div>
     <div class="card">
+      <div style="background:#FFF0F0;border:1.5px solid #E53935;border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;margin-top:2px"><circle cx="10" cy="10" r="9" stroke="#E53935" stroke-width="1.8"/><path d="M10 6v5" stroke="#E53935" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="14" r="1" fill="#E53935"/></svg>
+        <div>
+          <p style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:#B71C1C;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Un formulario por cada Beneficiario Final</p>
+          <p style="font-size:12px;color:#C62828;line-height:1.5;margin:0">Este formulario debe completarlo <strong>individualmente</strong> cada persona física que posea <strong>25% o más</strong> de participación directa o indirecta, o que ejerza control efectivo sobre la sociedad. Si hay múltiples beneficiarios, cada uno presenta su propia declaración.</p>
+        </div>
+      </div>
       <div class="grid-2">
         <div class="field">
           <label>Tipo de control ejercido <span class="req">*</span></label>
@@ -1219,7 +1226,7 @@ let drawing = false, hasSig = false;
 
 function initCanvas() {
   const wrap = document.getElementById('sigWrap');
-  const w = Math.max(wrap.offsetWidth, 300);
+  const w = Math.max(wrap.offsetWidth || 300, 300);
   canvas.style.width = w + 'px';
   canvas.style.height = '160px';
   canvas.width = w * window.devicePixelRatio;
@@ -1231,17 +1238,8 @@ function initCanvas() {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 }
-
-// Inicializar cuando el paso 6 es visible
-function maybeInitCanvas() {
-  const panel = document.getElementById('step-6');
-  if (panel && panel.classList.contains('active') && canvas.width === 0) {
-    setTimeout(initCanvas, 50);
-  }
-}
 window.addEventListener('load', () => setTimeout(initCanvas, 200));
-
-const origShowStep = window.showStep;
+window.addEventListener('resize', initCanvas);
 
 function getPos(e) {
   const r = canvas.getBoundingClientRect();
@@ -1281,89 +1279,75 @@ async function submitForm() {
   const fecha = new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const pepLabel = pepChecked ? ({no:'No es PEP', si:'Sí, actualmente', fue:'Fue PEP (cesó)'}[pepChecked.value] || pepChecked.value) : '';
   const sancLabel = sancChecked ? (sancChecked.value === 'no' ? 'No' : 'Sí') : '';
-
-  // Firma: guardar como PNG descargable via link oculto + enviar base64 truncado como referencia
   const sigBase64 = canvas.toDataURL('image/png');
 
-  const formData = {
-    _subject: '[BetWarrior AML] Beneficiario Final — ' + (v('nombre') || 'Sin nombre') + ' | ' + ref,
-    _replyto: v('email'),
-    '__ REFERENCIA': ref,
-    '__ FECHA': fecha,
-    ' ': ' ',
-    'A — RAZÓN SOCIAL': v('razon_social'),
-    'A — CNPJ': v('cnpj'),
-    'A — PAÍS CONSTITUCIÓN': v('pais_const'),
-    'A — FECHA CONSTITUCIÓN': v('fecha_const'),
-    'A — ACTIVIDAD CNAE': v('cnae'),
-    'A — DIRECCIÓN': v('direccion'),
-    '  ': ' ',
-    'B — TIPO DE CONTROL': v('tipo_control'),
-    'B — % PARTICIPACIÓN': v('porcentaje') ? v('porcentaje') + '%' : '',
-    'B — CADENA DE CONTROL': v('cadena_control'),
-    '   ': ' ',
-    'C — NOMBRE COMPLETO': v('nombre'),
-    'C — NOMBRE NACIMIENTO': v('nombre_nac'),
-    'C — TIPO DOCUMENTO': v('tipo_doc'),
-    'C — N° DOCUMENTO': v('num_doc'),
-    'C — FECHA NACIMIENTO': v('fecha_nac'),
-    'C — NACIONALIDAD': v('nacionalidad'),
-    'C — PAÍS RESIDENCIA FISCAL': v('pais_fiscal'),
-    'C — NIF': v('nif'),
-    'C — EMAIL': v('email'),
-    'C — TELÉFONO': v('telefono'),
-    'C — DOMICILIO': v('domicilio'),
-    '    ': ' ',
-    'D — CONDICIÓN PEP': pepLabel,
-    'D — CARGO PEP': v('pep_cargo'),
-    'D — ORGANISMO PEP': v('pep_organismo'),
-    'D — PAÍS CARGO': v('pep_pais'),
-    'D — FECHA CESE PEP': v('pep_cese'),
-    '     ': ' ',
-    'E — FUENTES DE FONDOS': fuentes,
-    'E — DESCRIPCIÓN ORIGEN': v('desc_origen'),
-    'E — PATRIMONIO ESTIMADO': v('patrimonio'),
-    '      ': ' ',
-    'F — SANCIONES': sancLabel,
-    'F — DETALLE SANCIONES': v('sanc_detalle'),
-    '       ': ' ',
-    'G — FIRMA (base64 PNG)': sigBase64.substring(0, 200) + '... [imagen completa en el portal Formspree]',
-    'G — FIRMA COMPLETA': sigBase64,
+  const fd = {
+    '_subject': '[BetWarrior AML] Beneficiario Final — ' + (v('nombre') || 'Sin nombre') + ' | ' + ref,
+    '_replyto': v('email'),
+    'REFERENCIA': ref,
+    'FECHA': fecha,
+    'A - RAZON SOCIAL': v('razon_social'),
+    'A - CNPJ': v('cnpj'),
+    'A - PAIS CONSTITUCION': v('pais_const'),
+    'A - FECHA CONSTITUCION': v('fecha_const'),
+    'A - ACTIVIDAD CNAE': v('cnae'),
+    'A - DIRECCION': v('direccion'),
+    'B - TIPO DE CONTROL': v('tipo_control'),
+    'B - PORCENTAJE': v('porcentaje') ? v('porcentaje') + '%' : '',
+    'B - CADENA DE CONTROL': v('cadena_control'),
+    'C - NOMBRE': v('nombre'),
+    'C - NOMBRE NACIMIENTO': v('nombre_nac'),
+    'C - TIPO DOCUMENTO': v('tipo_doc'),
+    'C - NRO DOCUMENTO': v('num_doc'),
+    'C - FECHA NACIMIENTO': v('fecha_nac'),
+    'C - NACIONALIDAD': v('nacionalidad'),
+    'C - PAIS FISCAL': v('pais_fiscal'),
+    'C - NIF': v('nif'),
+    'C - EMAIL': v('email'),
+    'C - TELEFONO': v('telefono'),
+    'C - DOMICILIO': v('domicilio'),
+    'D - PEP': pepLabel,
+    'D - CARGO': v('pep_cargo'),
+    'D - ORGANISMO': v('pep_organismo'),
+    'D - PAIS CARGO': v('pep_pais'),
+    'D - FECHA CESE': v('pep_cese'),
+    'E - FUENTES': fuentes,
+    'E - DESCRIPCION ORIGEN': v('desc_origen'),
+    'E - PATRIMONIO': v('patrimonio'),
+    'F - SANCIONES': sancLabel,
+    'F - DETALLE': v('sanc_detalle'),
+    'G - FIRMA PNG': sigBase64,
   };
 
-  // Filtrar campos vacios
-  const cleanData = {};
-  for (const [k, val2] of Object.entries(formData)) {
-    if (val2 && val2.trim && val2.trim() !== '' || k.startsWith('__') || k.trim() === '') {
-      cleanData[k] = val2;
-    }
+  const clean = {};
+  for (const [k, val2] of Object.entries(fd)) {
+    if (k.startsWith('_') || (val2 && val2 !== '')) clean[k] = val2;
   }
 
   try {
-    const response = await fetch('https://formspree.io/f/xnjwleqy', {
+    const res = await fetch('https://formspree.io/f/xnjwleqy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(cleanData)
+      body: JSON.stringify(clean)
     });
-
-    if (response.ok) {
+    if (res.ok) {
       document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('successScreen').classList.add('active');
       document.querySelector('.progress-bar-wrap').style.display = 'none';
       document.getElementById('refCode').textContent = 'Referencia: ' + ref;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      const data = await response.json();
-      alert('Error al enviar. Intentá de nuevo.
-' + (data.error || ''));
+      const data = await res.json();
+      alert('Error al enviar. Intentá de nuevo.\n' + (data.error || ''));
       btn.textContent = 'Enviar formulario';
       btn.disabled = false;
     }
-  } catch (err) {
+  } catch(err) {
     alert('No se pudo conectar. Verificá tu conexión e intentá de nuevo.');
     btn.textContent = 'Enviar formulario';
     btn.disabled = false;
   }
 }
-</script></body>
+</script>
+</body>
 </html>
