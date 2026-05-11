@@ -1217,37 +1217,44 @@ const canvas = document.getElementById('sigCanvas');
 const ctx = canvas.getContext('2d');
 let drawing = false, hasSig = false;
 
-function resizeCanvas() {
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * window.devicePixelRatio;
-  canvas.height = rect.height * window.devicePixelRatio;
+function initCanvas() {
+  const wrap = document.getElementById('sigWrap');
+  const rect = wrap.getBoundingClientRect();
+  const w = rect.width || 600;
+  const h = 160;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width = w * window.devicePixelRatio;
+  canvas.height = h * window.devicePixelRatio;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
   ctx.strokeStyle = '#1A1A1A';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 }
-window.addEventListener('load', resizeCanvas);
-window.addEventListener('resize', resizeCanvas);
+window.addEventListener('load', () => { setTimeout(initCanvas, 100); });
+window.addEventListener('resize', initCanvas);
 
 function getPos(e) {
   const r = canvas.getBoundingClientRect();
   const src = e.touches ? e.touches[0] : e;
-  return { x: src.clientX - r.left, y: src.clientY - r.top };
+  return {
+    x: (src.clientX - r.left) * (canvas.width / r.width / window.devicePixelRatio),
+    y: (src.clientY - r.top) * (canvas.height / r.height / window.devicePixelRatio)
+  };
 }
 
-canvas.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+canvas.addEventListener('mousedown', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
 canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; document.getElementById('sigPlaceholder').style.opacity = '0'; });
 canvas.addEventListener('mouseup', () => drawing = false);
 canvas.addEventListener('mouseleave', () => drawing = false);
-
 canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
 canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; document.getElementById('sigPlaceholder').style.opacity = '0'; }, { passive: false });
 canvas.addEventListener('touchend', () => drawing = false);
 
 function clearSig() {
-  const r = canvas.getBoundingClientRect();
-  ctx.clearRect(0, 0, r.width, r.height);
+  ctx.clearRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
   hasSig = false;
   document.getElementById('sigPlaceholder').style.opacity = '1';
 }
@@ -1260,62 +1267,90 @@ async function submitForm() {
   btn.textContent = 'Enviando…';
   btn.disabled = true;
 
-  // Recopilar todos los datos del formulario
-  const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
   const pepChecked = document.querySelector('input[name="pep"]:checked');
   const sancChecked = document.querySelector('input[name="sanc"]:checked');
-  const fuentesChecked = [...document.querySelectorAll('#step-4 .check-opt input:checked')].map(c => c.nextElementSibling.textContent.trim()).join(', ');
-
+  const fuentesChecked = [...document.querySelectorAll('#step-4 .check-opt input:checked')].map(c => c.nextElementSibling.textContent.trim()).join(' | ');
   const ref = 'BW-AML-' + Date.now().toString(36).toUpperCase();
+  const sigData = canvas.toDataURL('image/png');
 
-  // Firma como imagen base64
-  const sigData = document.getElementById('sigCanvas').toDataURL('image/png');
+  const row = (label, value) => value ? `<tr><td style="padding:6px 12px 6px 0;color:#666;font-size:13px;white-space:nowrap;vertical-align:top">${label}</td><td style="padding:6px 0;font-size:14px;color:#111;font-weight:500">${value}</td></tr>` : '';
+  const section = (title, rows) => `<tr><td colspan="2" style="padding:18px 0 6px"><span style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#FF4500;font-weight:bold">${title}</span><hr style="border:none;border-top:1px solid #eee;margin:4px 0 0"></td></tr>${rows}`;
+
+  const htmlBody = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+  <div style="background:#0D0D0D;padding:20px 24px;border-bottom:3px solid #FF4500">
+    <p style="color:#fff;font-size:18px;font-weight:bold;margin:0">BetWarrior — AML/PLD</p>
+    <p style="color:#999;font-size:12px;margin:4px 0 0">Nueva declaración de Beneficiario Final</p>
+  </div>
+  <div style="background:#fff;padding:24px;border:1px solid #eee">
+    <p style="background:#fff8f5;border-left:4px solid #FF4500;padding:10px 14px;font-size:13px;color:#333;margin:0 0 20px">
+      <strong>Referencia:</strong> ${ref} &nbsp;·&nbsp; <strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+    </p>
+    <table style="width:100%;border-collapse:collapse">
+      ${section('A · Persona Jurídica',
+        row('Razón social', val('razon_social')) +
+        row('CNPJ / Registro', val('cnpj')) +
+        row('País de constitución', val('pais_const')) +
+        row('Fecha de constitución', val('fecha_const')) +
+        row('Actividad (CNAE)', val('cnae')) +
+        row('Dirección registrada', val('direccion'))
+      )}
+      ${section('B · Naturaleza del Control',
+        row('Tipo de control', val('tipo_control')) +
+        row('% de participación', val('porcentaje') ? val('porcentaje') + '%' : '') +
+        row('Cadena de control', val('cadena_control'))
+      )}
+      ${section('C · Datos Personales del Beneficiario',
+        row('Nombre completo', val('nombre')) +
+        row('Nombre de nacimiento', val('nombre_nac')) +
+        row('Tipo de documento', val('tipo_doc')) +
+        row('N° de documento', val('num_doc')) +
+        row('Fecha de nacimiento', val('fecha_nac')) +
+        row('Fecha emisión doc.', val('fecha_emision')) +
+        row('Nacionalidad', val('nacionalidad')) +
+        row('País residencia fiscal', val('pais_fiscal')) +
+        row('NIF', val('nif')) +
+        row('Email', val('email')) +
+        row('Teléfono', val('telefono')) +
+        row('Tel. alternativo', val('tel_alt')) +
+        row('Domicilio', val('domicilio'))
+      )}
+      ${section('D · Exposición Política (PEP)',
+        row('Condición PEP', pepChecked ? ({no:'No es PEP', si:'Sí, actualmente', fue:'Fue PEP (cesó)'}[pepChecked.value] || pepChecked.value) : '') +
+        row('Cargo / función', val('pep_cargo')) +
+        row('Organismo', val('pep_organismo')) +
+        row('País del cargo', val('pep_pais')) +
+        row('Fecha de cese', val('pep_cese')) +
+        row('Vínculo', val('pep_vinculo'))
+      )}
+      ${section('E · Origen de Fondos',
+        row('Fuentes', fuentesChecked) +
+        row('Otro (detalle)', val('otro_fuente')) +
+        row('Descripción origen', val('desc_origen')) +
+        row('Patrimonio estimado', val('patrimonio'))
+      )}
+      ${section('F · Sanciones',
+        row('¿Figura en listas?', sancChecked ? (sancChecked.value === 'no' ? 'No' : 'Sí') : '') +
+        row('Detalle sanciones', val('sanc_detalle'))
+      )}
+    </table>
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee">
+      <p style="font-size:11px;color:#FF4500;text-transform:uppercase;letter-spacing:1px;font-weight:bold;margin:0 0 10px">G · Firma manuscrita digital</p>
+      <img src="${sigData}" style="border:1px solid #ddd;border-radius:4px;max-width:100%;background:#fff" alt="Firma">
+    </div>
+    <p style="margin-top:20px;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:12px">
+      Portaria SPA/MF N° 114.324 · Lei N° 9.613/1998 · Resolución COAF N° 40/2021
+    </p>
+  </div>
+</div>`;
 
   const formData = {
     _subject: `[BetWarrior AML] Beneficiario Final — ${val('nombre') || 'Sin nombre'} | ${ref}`,
+    _replyto: val('email'),
+    mensaje: htmlBody,
     referencia: ref,
-    // Paso A
-    razon_social: val('razon_social'),
-    cnpj: val('cnpj'),
-    pais_constitucion: val('pais_const'),
-    fecha_constitucion: val('fecha_const'),
-    actividad_cnae: val('cnae'),
-    direccion_registrada: val('direccion'),
-    // Paso B
-    tipo_control: val('tipo_control'),
-    porcentaje_participacion: val('porcentaje'),
-    cadena_control: val('cadena_control'),
-    // Paso C
-    nombre_completo: val('nombre'),
-    nombre_nacimiento: val('nombre_nac'),
-    tipo_documento: val('tipo_doc'),
-    numero_documento: val('num_doc'),
-    fecha_nacimiento: val('fecha_nac'),
-    fecha_emision_doc: val('fecha_emision'),
-    nacionalidad: val('nacionalidad'),
-    pais_residencia_fiscal: val('pais_fiscal'),
-    nif: val('nif'),
-    email: val('email'),
-    telefono: val('telefono'),
-    telefono_alternativo: val('tel_alt'),
-    domicilio: val('domicilio'),
-    // Paso D - PEP
-    pep_condicion: pepChecked ? pepChecked.value : 'no informado',
-    pep_cargo: val('pep_cargo'),
-    pep_organismo: val('pep_organismo'),
-    pep_pais: val('pep_pais'),
-    pep_cese: val('pep_cese'),
-    pep_vinculo: val('pep_vinculo'),
-    // Paso E - Fondos
-    fuentes_fondos: fuentesChecked,
-    otro_fuente: val('otro_fuente'),
-    descripcion_origen: val('desc_origen'),
-    patrimonio_estimado: val('patrimonio'),
-    // Paso F - Sanciones
-    sanciones: sancChecked ? sancChecked.value : 'no informado',
-    sanciones_detalle: val('sanc_detalle'),
-    // Firma
-    firma_imagen: sigData,
+    nombre: val('nombre'),
+    empresa: val('razon_social'),
   };
 
   try {
@@ -1338,11 +1373,10 @@ async function submitForm() {
       btn.disabled = false;
     }
   } catch (err) {
-    alert('No se pudo conectar con el servidor. Verificá tu conexión a internet e intentá de nuevo.');
+    alert('No se pudo conectar con el servidor. Verificá tu conexión e intentá de nuevo.');
     btn.textContent = 'Enviar formulario';
     btn.disabled = false;
   }
 }
-</script>
-</body>
+</script></body>
 </html>
