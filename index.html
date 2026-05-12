@@ -170,11 +170,9 @@ body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;font-
       <div class="prog-line"></div>
       <div class="prog-step" id="ps-3" onclick="goStep(3)"><div class="prog-dot">D</div><span class="prog-label">PEP</span></div>
       <div class="prog-line"></div>
-      <div class="prog-step" id="ps-4" onclick="goStep(4)"><div class="prog-dot">E</div><span class="prog-label">Fondos</span></div>
+      <div class="prog-step" id="ps-4" onclick="goStep(4)"><div class="prog-dot">F</div><span class="prog-label">Sanciones</span></div>
       <div class="prog-line"></div>
-      <div class="prog-step" id="ps-5" onclick="goStep(5)"><div class="prog-dot">F</div><span class="prog-label">Sanciones</span></div>
-      <div class="prog-line"></div>
-      <div class="prog-step" id="ps-6" onclick="goStep(6)"><div class="prog-dot">G</div><span class="prog-label">Firma</span></div>
+      <div class="prog-step" id="ps-5" onclick="goStep(5)"><div class="prog-dot">G</div><span class="prog-label">Firma</span></div>
     </div>
   </div>
 </header>
@@ -309,7 +307,6 @@ body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;font-
 
   <div id="accionistas-container"></div>
   <button class="btn-add-persona" onclick="addPersona('accionista')" id="btn-add-accionista">
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     + Agregar Accionista
   </button>
 
@@ -341,7 +338,6 @@ body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;font-
 
   <div id="directores-container"></div>
   <button class="btn-add-persona" onclick="addPersona('director')" id="btn-add-director">
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     + Agregar Director / Administrador
   </button>
 
@@ -384,65 +380,17 @@ body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;font-
   <div class="nav-row">
     <button class="btn-back" onclick="prevStep(3)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Volver</button>
     <div style="display:flex;align-items:center;gap:12px">
-      <span class="step-counter">Paso <span>4</span> de 7</span>
+      <span class="step-counter">Paso <span>4</span> de 6</span>
       <button class="btn-next" onclick="nextStep(3)">Continuar <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
   </div>
 </div>
 
-<!-- ══ STEP 4 — E. Fondos ══ -->
-<div class="step-panel" id="step-4">
-  <div class="step-header">
-    <div class="step-letter">E</div>
-    <div class="step-info">
-      <h2>Origen de Fondos y Patrimonio</h2>
-      <p>Art. 11 Lei N° 9.613/1998 · GAFI Rec. 10</p>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">Fuentes de ingreso</div>
-    <div class="check-group">
-      <div class="check-opt"><input type="checkbox" id="f1"><label for="f1">Salarios / remuneración laboral</label></div>
-      <div class="check-opt"><input type="checkbox" id="f2"><label for="f2">Dividendos / utilidades societarias</label></div>
-      <div class="check-opt"><input type="checkbox" id="f3"><label for="f3">Venta de bienes inmuebles</label></div>
-      <div class="check-opt"><input type="checkbox" id="f4"><label for="f4">Inversiones / rendimientos financieros</label></div>
-      <div class="check-opt"><input type="checkbox" id="f5"><label for="f5">Herencia / donación</label></div>
-      <div class="check-opt"><input type="checkbox" id="f6"><label for="f6">Actividad empresarial propia</label></div>
-      <div class="check-opt"><input type="checkbox" id="f7"><label for="f7">Préstamos bancarios</label></div>
-      <div class="check-opt"><input type="checkbox" id="f8"><label for="f8">Otro</label></div>
-    </div>
-    <div class="field" style="margin-top:12px" id="otro_fuente_wrap">
-      <label>Especificar otro origen</label>
-      <input type="text" id="otro_fuente" placeholder="Describa la fuente">
-    </div>
-    <div class="field" style="margin-top:12px">
-      <label>Descripción del origen de fondos <span class="req">*</span></label>
-      <textarea id="desc_origen" placeholder="Describa con detalle cómo se generaron los fondos o el patrimonio…" required></textarea>
-      <span class="err-msg">Este campo es obligatorio</span>
-    </div>
-    <div class="field" style="margin-top:12px">
-      <label>Patrimonio estimado (USD)</label>
-      <select id="patrimonio">
-        <option value="">Seleccionar rango</option>
-        <option>Menos de USD 100.000</option>
-        <option>USD 100.000 – 500.000</option>
-        <option>USD 500.000 – 1.000.000</option>
-        <option>USD 1.000.000 – 5.000.000</option>
-        <option>Más de USD 5.000.000</option>
-      </select>
-    </div>
-  </div>
-  <div class="nav-row">
-    <button class="btn-back" onclick="prevStep(4)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Volver</button>
-    <div style="display:flex;align-items:center;gap:12px">
-      <span class="step-counter">Paso <span>5</span> de 7</span>
-      <button class="btn-next" onclick="nextStep(4)">Continuar <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    </div>
-  </div>
-</div>
+
+<!-- ══ STEP 5
 
 <!-- ══ STEP 5 — F. Sanciones ══ -->
-<div class="step-panel" id="step-5">
+<div class="step-panel" id="step-4">
   <div class="step-header">
     <div class="step-letter">F</div>
     <div class="step-info">
@@ -467,16 +415,16 @@ body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;font-
     </div>
   </div>
   <div class="nav-row">
-    <button class="btn-back" onclick="prevStep(5)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Volver</button>
+    <button class="btn-back" onclick="prevStep(4)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Volver</button>
     <div style="display:flex;align-items:center;gap:12px">
-      <span class="step-counter">Paso <span>6</span> de 7</span>
-      <button class="btn-next" onclick="nextStep(5)">Continuar <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <span class="step-counter">Paso <span>6</span> de 6</span>
+      <button class="btn-next" onclick="nextStep(4)">Continuar <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
   </div>
 </div>
 
 <!-- ══ STEP 6 — G. Declaración y Firma ══ -->
-<div class="step-panel" id="step-6">
+<div class="step-panel" id="step-5">
   <div class="step-header">
     <div class="step-letter">G</div>
     <div class="step-info">
@@ -536,9 +484,9 @@ body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;font-
   </div>
 
   <div class="nav-row">
-    <button class="btn-back" onclick="prevStep(6)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Volver</button>
+    <button class="btn-back" onclick="prevStep(4)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Volver</button>
     <div style="display:flex;align-items:center;gap:12px">
-      <span class="step-counter">Paso <span>7</span> de 7</span>
+      <span class="step-counter">Paso <span>6</span> de 6</span>
       <button class="btn-submit" onclick="submitForm()">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 9l5 5 9-9" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Enviar formulario
@@ -565,7 +513,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;font-
 <script>
 // ── STATE ──
 let currentStep = 0;
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 6;
 let accionistaCount = 0;
 let directorCount = 0;
 let pepEntryCount = 0;
@@ -715,6 +663,41 @@ function personaHTML(type, num) {
         <div class="file-list" id="list_${prefix}pasaporte"></div>
       </div>
     </div>
+    ${isAcc ? `<div style="margin-top:14px">
+      <p style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="display:inline-block;width:3px;height:14px;background:#FF4500;border-radius:2px;margin-right:4px"></span>Origen de Fondos y Patrimonio</p>
+      <div class="check-group" style="margin-bottom:12px">
+        <div class="check-opt"><input type="checkbox" id="${prefix}f1"><label for="${prefix}f1">Salarios / remuneración laboral</label></div>
+        <div class="check-opt"><input type="checkbox" id="${prefix}f2"><label for="${prefix}f2">Dividendos / utilidades societarias</label></div>
+        <div class="check-opt"><input type="checkbox" id="${prefix}f3"><label for="${prefix}f3">Venta de bienes inmuebles</label></div>
+        <div class="check-opt"><input type="checkbox" id="${prefix}f4"><label for="${prefix}f4">Inversiones / rendimientos financieros</label></div>
+        <div class="check-opt"><input type="checkbox" id="${prefix}f5"><label for="${prefix}f5">Herencia / donación</label></div>
+        <div class="check-opt"><input type="checkbox" id="${prefix}f6"><label for="${prefix}f6">Actividad empresarial propia</label></div>
+        <div class="check-opt"><input type="checkbox" id="${prefix}f7"><label for="${prefix}f7">Préstamos bancarios</label></div>
+        <div class="check-opt"><input type="checkbox" id="${prefix}f8"><label for="${prefix}f8">Otro</label></div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Especificar otro origen</label>
+          <input type="text" id="${prefix}otro_fuente" placeholder="Describa la fuente">
+        </div>
+        <div class="field">
+          <label>Patrimonio estimado (USD)</label>
+          <select id="${prefix}patrimonio">
+            <option value="">Seleccionar rango</option>
+            <option>Menos de USD 100.000</option>
+            <option>USD 100.000 – 500.000</option>
+            <option>USD 500.000 – 1.000.000</option>
+            <option>USD 1.000.000 – 5.000.000</option>
+            <option>Más de USD 5.000.000</option>
+          </select>
+        </div>
+        <div class="field col-2">
+          <label>Descripción del origen de fondos <span class="req">*</span></label>
+          <textarea id="${prefix}desc_origen" placeholder="Describa con detalle cómo se generaron los fondos o el patrimonio…" required></textarea>
+          <span class="err-msg">Este campo es obligatorio</span>
+        </div>
+      </div>
+    </div>` : ''}
   </div>`;
 }
 
@@ -952,7 +935,6 @@ async function submitForm() {
   const v = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
   const ref = 'BW-AML-' + Date.now().toString(36).toUpperCase();
   const fecha = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  const fuentes = [...document.querySelectorAll('#step-4 .check-opt input:checked')].map(c=>c.nextElementSibling.textContent.trim()).join(' | ');
   const pepVal = document.querySelector('input[name="pep_global"]:checked');
   const sancVal = document.querySelector('input[name="sanc"]:checked');
 
@@ -961,7 +943,8 @@ async function submitForm() {
   let accData = '';
   accBlocks.forEach((b,i) => {
     const p = b.dataset.type + '_' + (i+1) + '_';
-    accData += `\nACCIONISTA ${i+1}: ${v(p+'nombre')} | Doc: ${v(p+'tipo_doc')} ${v(p+'num_doc')} | Nac: ${v(p+'fecha_nac')} | Vto: ${v(p+'fecha_vto')} | ${v(p+'nacionalidad')} | ${v(p+'email')} | ${v(p+'telefono')} | ${v(p+'domicilio')} | Control: ${v(p+'tipo_control')} ${v(p+'porcentaje')}%`;
+    const fuentes = [...b.querySelectorAll('.check-opt input:checked')].map(c=>c.nextElementSibling.textContent.trim()).join(' | ');
+    accData += `\nACCIONISTA ${i+1}: ${v(p+'nombre')} | Doc: ${v(p+'tipo_doc')} ${v(p+'num_doc')} | Nac: ${v(p+'fecha_nac')} | Vto: ${v(p+'fecha_vto')} | ${v(p+'nacionalidad')} | ${v(p+'email')} | ${v(p+'telefono')} | ${v(p+'domicilio')} | Control: ${v(p+'tipo_control')} ${v(p+'porcentaje')}% | Fondos: ${fuentes} | Origen: ${v(p+'desc_origen')} | Patrimonio: ${v(p+'patrimonio')}`;
   });
 
   // Recopilar directores
@@ -1007,9 +990,7 @@ async function submitForm() {
     'B - ACCIONISTAS': accData,
     'C - DIRECTORES': dirData,
     'D - PEP': pepData,
-    'E - FUENTES': fuentes,
-    'E - DESCRIPCION ORIGEN': v('desc_origen'),
-    'E - PATRIMONIO': v('patrimonio'),
+
     'F - SANCIONES': sancData,
     'G - DECLARANTE': v('decl_nombre'),
     'G - CARGO': v('decl_cargo'),
