@@ -852,6 +852,11 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── VALIDATION ──
+function hasFiles(listId) {
+  const list = document.getElementById(listId);
+  return list && list.children.length > 0;
+}
+
 function validateStep(step) {
   let ok = true;
   const required = document.querySelectorAll('#step-' + step + ' [required]');
@@ -874,14 +879,51 @@ function validateStep(step) {
       ok = false;
     }
   });
+
+  // Validación de archivos obligatorios — Sección A
+  if (step === 0) {
+    const archivos = [
+      { id: 'list_estatuto', nombre: 'Estatuto social' },
+      { id: 'list_taxid', nombre: 'Constancia de Tax ID' },
+      { id: 'list_banco', nombre: 'Datos de cuenta bancaria' },
+    ];
+    const faltantes = archivos.filter(a => !hasFiles(a.id)).map(a => a.nombre);
+    if (faltantes.length > 0) {
+      alert('Por favor adjunte los siguientes documentos obligatorios:\n• ' + faltantes.join('\n• '));
+      ok = false;
+    }
+  }
+
+  // Validación de pasaporte en accionistas y directores
+  if (step === 1) {
+    const blocks = document.querySelectorAll('#accionistas-container .persona-block');
+    let faltaPasaporte = false;
+    blocks.forEach((b, i) => {
+      const p = b.dataset.type + '_' + (i+1) + '_';
+      if (!hasFiles('list_' + p + 'pasaporte')) faltaPasaporte = true;
+    });
+    if (faltaPasaporte) {
+      alert('Por favor adjunte la copia de pasaporte de cada accionista.');
+      ok = false;
+    }
+  }
+  if (step === 2) {
+    const blocks = document.querySelectorAll('#directores-container .persona-block');
+    let faltaPasaporte = false;
+    blocks.forEach((b, i) => {
+      const p = b.dataset.type + '_' + (i+1) + '_';
+      if (!hasFiles('list_' + p + 'pasaporte')) faltaPasaporte = true;
+    });
+    if (faltaPasaporte) {
+      alert('Por favor adjunte la copia de pasaporte de cada director/administrador.');
+      ok = false;
+    }
+  }
   if (step === 3) {
     const pepVal = document.querySelector('input[name="pep_global"]:checked');
     if (!pepVal) { alert('Por favor indique si alguna persona declarada es o fue PEP.'); ok = false; }
   }
-  if (step === 4) {
-    const checks = document.querySelectorAll('#step-4 .check-opt input:checked');
-    if (checks.length === 0) { alert('Seleccione al menos una fuente de origen de fondos.'); ok = false; }
-  }
+
   if (step === 5) {
     const sancVal = document.querySelector('input[name="sanc"]:checked');
     if (!sancVal) { alert('Por favor indique si alguna persona figura en listas de sanciones.'); ok = false; }
