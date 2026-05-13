@@ -842,6 +842,12 @@ function toggleSanc() {
     if (sancEntryCount === 0) { sancEntryCount = 1; document.getElementById('sanc_entries').innerHTML = sancEntryHTML(1); }
   } else {
     wrap.style.display = 'none';
+    // Deshabilitar required y limpiar errores al seleccionar No
+    wrap.querySelectorAll('[required]').forEach(el => {
+      el.required = false;
+      el.classList.remove('error');
+      if (el.closest('.field')) el.closest('.field').classList.remove('show-err');
+    });
   }
 }
 
