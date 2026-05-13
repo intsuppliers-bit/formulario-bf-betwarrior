@@ -148,6 +148,8 @@ body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;font-
   .progress-track .prog-label{display:none}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("enblkM0ziJoA9ZtRL");</script>
 </head>
 <body>
 
@@ -969,7 +971,7 @@ function clearSig(){ ctx.clearRect(0,0,canvas.width,canvas.height); hasSig=false
 
 // ── SUBMIT ──
 async function submitForm() {
-  if (!validateStep(6)) return;
+  if (!validateStep(5)) return;
   const btn = document.querySelector('.btn-submit');
   btn.textContent = 'Enviando…'; btn.disabled = true;
 
@@ -979,91 +981,93 @@ async function submitForm() {
   const pepVal = document.querySelector('input[name="pep_global"]:checked');
   const sancVal = document.querySelector('input[name="sanc"]:checked');
 
-  // Recopilar accionistas
+  // Accionistas
   const accBlocks = document.querySelectorAll('#accionistas-container .persona-block');
   let accData = '';
   accBlocks.forEach((b,i) => {
     const p = b.dataset.type + '_' + (i+1) + '_';
     const fuentes = [...b.querySelectorAll('.check-opt input:checked')].map(c=>c.nextElementSibling.textContent.trim()).join(' | ');
-    accData += `\nACCIONISTA ${i+1}: ${v(p+'nombre')} | Doc: ${v(p+'tipo_doc')} ${v(p+'num_doc')} | Nac: ${v(p+'fecha_nac')} | Vto: ${v(p+'fecha_vto')} | ${v(p+'nacionalidad')} | ${v(p+'email')} | ${v(p+'telefono')} | ${v(p+'domicilio')} | Control: ${v(p+'tipo_control')} ${v(p+'porcentaje')}% | Fondos: ${fuentes} | Origen: ${v(p+'desc_origen')} | Patrimonio: ${v(p+'patrimonio')}`;
+    accData += `
+ACCIONISTA ${i+1}:
+  Nombre: ${v(p+'nombre')}
+  Documento: ${v(p+'tipo_doc')} ${v(p+'num_doc')}
+  Nacimiento: ${v(p+'fecha_nac')} | Vto doc: ${v(p+'fecha_vto')}
+  Nacionalidad: ${v(p+'nacionalidad')}
+  Email: ${v(p+'email')} | Tel: ${v(p+'telefono')}
+  Domicilio: ${v(p+'domicilio')}
+  Control: ${v(p+'tipo_control')} — ${v(p+'porcentaje')}%
+  Fondos: ${fuentes}
+  Origen: ${v(p+'desc_origen')}
+  Patrimonio: ${v(p+'patrimonio')}
+`;
   });
 
-  // Recopilar directores
+  // Directores
   const dirBlocks = document.querySelectorAll('#directores-container .persona-block');
   let dirData = '';
   dirBlocks.forEach((b,i) => {
     const p = b.dataset.type + '_' + (i+1) + '_';
-    dirData += `\nDIRECTOR ${i+1}: ${v(p+'nombre')} | Doc: ${v(p+'tipo_doc')} ${v(p+'num_doc')} | Nac: ${v(p+'fecha_nac')} | Vto: ${v(p+'fecha_vto')} | ${v(p+'nacionalidad')} | ${v(p+'email')} | ${v(p+'telefono')} | ${v(p+'domicilio')}`;
+    dirData += `
+DIRECTOR ${i+1}:
+  Nombre: ${v(p+'nombre')}
+  Documento: ${v(p+'tipo_doc')} ${v(p+'num_doc')}
+  Nacimiento: ${v(p+'fecha_nac')} | Vto doc: ${v(p+'fecha_vto')}
+  Nacionalidad: ${v(p+'nacionalidad')}
+  Email: ${v(p+'email')} | Tel: ${v(p+'telefono')}
+  Domicilio: ${v(p+'domicilio')}
+`;
   });
 
-  // PEP entries
-  let pepData = pepVal ? pepVal.value : 'no';
+  // PEP
+  let pepData = pepVal ? (pepVal.value === 'no' ? 'No' : pepVal.value === 'si' ? 'Sí, actualmente' : 'Fue PEP (cesó)') : 'No informado';
   if (pepVal && pepVal.value !== 'no') {
     document.querySelectorAll('#pep_entries .entry-block').forEach((b,i) => {
       const n = i+1;
-      pepData += `\nPEP ${n}: ${v('pep_nombre_'+n)} | Cargo: ${v('pep_cargo_'+n)} | ${v('pep_organismo_'+n)} | ${v('pep_pais_'+n)} | Cese: ${v('pep_cese_'+n)} | Vínculo: ${v('pep_vinculo_'+n)}`;
+      pepData += `
+PEP ${n}: ${v('pep_nombre_'+n)} | Cargo: ${v('pep_cargo_'+n)} | ${v('pep_organismo_'+n)} | ${v('pep_pais_'+n)} | Cese: ${v('pep_cese_'+n)} | Vínculo: ${v('pep_vinculo_'+n)}`;
     });
   }
 
-  // Sanc entries
-  let sancData = sancVal ? sancVal.value : 'no';
+  // Sanciones
+  let sancData = sancVal ? (sancVal.value === 'no' ? 'No' : 'Sí') : 'No informado';
   if (sancVal && sancVal.value === 'si') {
     document.querySelectorAll('#sanc_entries .entry-block').forEach((b,i) => {
       const n = i+1;
-      sancData += `\nSANC ${n}: ${v('sanc_nombre_'+n)} | Lista: ${v('sanc_lista_'+n)} | ${v('sanc_detalle_'+n)}`;
+      sancData += `
+Sancionado ${n}: ${v('sanc_nombre_'+n)} | Lista: ${v('sanc_lista_'+n)} | ${v('sanc_detalle_'+n)}`;
     });
   }
 
-  const sigBase64 = canvas.toDataURL('image/png');
-
-  const fd = {
-    '_subject': '[BetWarrior AML] Proveedor — ' + v('razon_social') + ' | ' + ref,
-    '_replyto': v('resp_pagos'),
-    'REFERENCIA': ref,
-    'FECHA': fecha,
-    'A - RAZON SOCIAL': v('razon_social'),
-    'A - TIPO TAX ID': v('tipo_tax'),
-    'A - NRO TAX ID': v('cnpj'),
-    'A - PAIS CONSTITUCION': v('pais_const'),
-    'A - FECHA CONSTITUCION': v('fecha_const'),
-    'A - ACTIVIDAD': v('cnae'),
-    'A - DIRECCION': v('direccion'),
-    'B - ACCIONISTAS': accData,
-    'C - DIRECTORES': dirData,
-    'D - PEP': pepData,
-
-    'F - SANCIONES': sancData,
-    'G - DECLARANTE': v('decl_nombre'),
-    'G - CARGO': v('decl_cargo'),
-    'G - LUGAR FECHA': v('decl_lugar'),
-    'G - RESP PAGOS': v('resp_pagos'),
-    'G - FIRMA PNG': sigBase64,
+  const templateParams = {
+    referencia:         ref,
+    fecha:              fecha,
+    razon_social:       v('razon_social'),
+    tipo_tax:           v('tipo_tax'),
+    nro_tax:            v('cnpj'),
+    pais_constitucion:  v('pais_const'),
+    fecha_constitucion: v('fecha_const'),
+    actividad:          v('cnae'),
+    direccion:          v('direccion'),
+    accionistas:        accData,
+    directores:         dirData,
+    pep:                pepData,
+    sanciones:          sancData,
+    declarante:         v('decl_nombre'),
+    cargo:              v('decl_cargo'),
+    lugar_fecha:        v('decl_lugar'),
+    resp_pagos:         v('resp_pagos'),
   };
 
-  const clean = {};
-  for (const [k,val2] of Object.entries(fd)) {
-    if (k.startsWith('_') || (val2 && val2 !== '')) clean[k] = val2;
-  }
-
   try {
-    const res = await fetch('https://formspree.io/f/xnjwleqy', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Accept':'application/json'},
-      body:JSON.stringify(clean)
-    });
-    if (res.ok) {
-      document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
-      document.getElementById('successScreen').classList.add('active');
-      document.querySelector('.progress-bar-wrap').style.display = 'none';
-      document.getElementById('refCode').textContent = 'Referencia: ' + ref;
-      window.scrollTo({top:0,behavior:'smooth'});
-    } else {
-      const data = await res.json();
-      alert('Error al enviar. Intentá de nuevo.\n' + (data.error||''));
-      btn.textContent = 'Enviar formulario'; btn.disabled = false;
-    }
+    await emailjs.send('service_rpctc2a', 'template_aml_legal_fin', templateParams);
+    document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('successScreen').classList.add('active');
+    document.querySelector('.progress-bar-wrap').style.display = 'none';
+    document.getElementById('refCode').textContent = 'Referencia: ' + ref;
+    window.scrollTo({top:0,behavior:'smooth'});
   } catch(err) {
-    alert('No se pudo conectar. Verificá tu conexión e intentá de nuevo.');
+    console.error('EmailJS error:', err);
+    alert('No se pudo enviar el formulario. Verificá tu conexión e intentá de nuevo.');
     btn.textContent = 'Enviar formulario'; btn.disabled = false;
   }
 }
