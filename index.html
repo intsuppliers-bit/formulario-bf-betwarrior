@@ -752,12 +752,12 @@ function pepEntryHTML(n) {
     <div class="grid-2">
       <div class="field">
         <label>Nombre completo <span class="req">*</span></label>
-        <input type="text" id="pep_nombre_${n}" placeholder="Nombre de la persona PEP" required>
+        <input type="text" id="pep_nombre_${n}" placeholder="Nombre de la persona PEP">
         <span class="err-msg">Este campo es obligatorio</span>
       </div>
       <div class="field">
         <label>Cargo / función pública <span class="req">*</span></label>
-        <input type="text" id="pep_cargo_${n}" placeholder="Ej: Senador, Ministro…" required>
+        <input type="text" id="pep_cargo_${n}" placeholder="Ej: Senador, Ministro…">
         <span class="err-msg">Este campo es obligatorio</span>
       </div>
       <div class="field">
@@ -787,12 +787,12 @@ function sancEntryHTML(n) {
     <div class="grid-2">
       <div class="field">
         <label>Nombre completo <span class="req">*</span></label>
-        <input type="text" id="sanc_nombre_${n}" placeholder="Nombre de la persona sancionada" required>
+        <input type="text" id="sanc_nombre_${n}" placeholder="Nombre de la persona sancionada">
         <span class="err-msg">Este campo es obligatorio</span>
       </div>
       <div class="field">
         <label>Lista de sanciones <span class="req">*</span></label>
-        <input type="text" id="sanc_lista_${n}" placeholder="Ej: OFAC, ONU, UE…" required>
+        <input type="text" id="sanc_lista_${n}" placeholder="Ej: OFAC, ONU, UE…">
         <span class="err-msg">Este campo es obligatorio</span>
       </div>
       <div class="field col-2">
@@ -929,11 +929,41 @@ function validateStep(step) {
   if (step === 3) {
     const pepVal = document.querySelector('input[name="pep_global"]:checked');
     if (!pepVal) { alert('Por favor indique si alguna persona declarada es o fue PEP.'); ok = false; }
+    // Validar campos PEP solo si el panel está visible
+    if (pepVal && pepVal.value !== 'no') {
+      document.querySelectorAll('#pep_entries_wrap input[type="text"]').forEach(el => {
+        if (el.id.includes('nombre') || el.id.includes('cargo')) {
+          if (!el.value.trim()) {
+            el.classList.add('error');
+            if (el.closest('.field')) el.closest('.field').classList.add('show-err');
+            ok = false;
+          } else {
+            el.classList.remove('error');
+            if (el.closest('.field')) el.closest('.field').classList.remove('show-err');
+          }
+        }
+      });
+    }
   }
 
-  if (step === 5) {
+  if (step === 4) {
     const sancVal = document.querySelector('input[name="sanc"]:checked');
     if (!sancVal) { alert('Por favor indique si alguna persona figura en listas de sanciones.'); ok = false; }
+    // Validar campos Sanc solo si el panel está visible
+    if (sancVal && sancVal.value === 'si') {
+      document.querySelectorAll('#sanc_entries_wrap input[type="text"]').forEach(el => {
+        if (el.id.includes('nombre') || el.id.includes('lista')) {
+          if (!el.value.trim()) {
+            el.classList.add('error');
+            if (el.closest('.field')) el.closest('.field').classList.add('show-err');
+            ok = false;
+          } else {
+            el.classList.remove('error');
+            if (el.closest('.field')) el.closest('.field').classList.remove('show-err');
+          }
+        }
+      });
+    }
   }
   return ok;
 }
